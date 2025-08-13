@@ -1,0 +1,46 @@
+name: Flutter iOS Build
+
+on:
+  workflow_dispatch:  # Allows manual triggering from the GitHub UI
+  push:
+    branches:
+      - main  # Trigger on pushes to main (customize as needed)
+
+jobs:
+  build-ios:
+    runs-on: macos-latest  # This is key: Uses a macOS runner with Xcode
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java (for Flutter, if needed)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'  # Flutter often requires Java for Android, but optional here
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'  # Match your project's Flutter version (from pubspec.yaml: >=3.8.0 <4.0.0; use latest stable)
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter installation
+        run: flutter doctor --verbose
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Build iOS release
+        run: flutter build ios --release --no-codesign  # --no-codesign skips signing for basic builds; remove if you set up signing
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/Runner.app  # Upload the built app for download
